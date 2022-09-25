@@ -5,6 +5,9 @@ from statistics import mean, median, stdev
 from ast import literal_eval
 import operator
 import math
+import pythonosc
+from pythonosc import udp_client
+import time
 
 def percentage_pitch(pattern, pitch_options):
     # create dictionary for avail pitches
@@ -46,6 +49,9 @@ class world:
         self.population = self.build_population(population_file)
         self.population.sort(key = lambda x: x.fitness)
         self.population_size = len(self.population)
+        IP = "143.215.124.77"
+        PORT_TO_MAX = 7980
+        self.client = udp_client.SimpleUDPClient(IP, PORT_TO_MAX)
     
     def build_population(self, input_file):
         population = []
@@ -62,10 +68,12 @@ class world:
         return population
 
     def print_population(self):
-        for gene in self.population:
-            print(gene.get_fitness(), gene.get_pattern())
+        # for gene in self.population:
+        #     print(gene.get_fitness(), gene.get_pattern())
+        for i in range(5):
+            print(self.population[i].get_fitness(), self.population[i].get_pattern())
 
-    def run(self, num_generations=10, survival_rate=.5, mutation_rate=.2):
+    def run(self, num_generations=10, survival_rate=.5, mutation_rate=.3):
         for i in range(num_generations):
             # check evolution rate
             print("Generation " + str(i-1))
@@ -84,10 +92,11 @@ class world:
 
             # # mutate a random amount of genes
             self.mutate(mutation_rate)
-        # check evolution rate
-        self.population.sort(key = lambda x: x.fitness)
-        print("Generation " + str(num_generations))
-        self.print_population()
+            # check evolution rate
+            # self.population.sort(key = lambda x: x.fitness)
+            # self.print_population()
+            self.play_melodies()
+            input("press enter to continue")
         
 
     def breed(self):
@@ -96,25 +105,38 @@ class world:
 
         # weave together pattern from random parents by alternating between patterns
         total = 0
-        ind = 0
+        ind_1 = 0
+        ind_2 = 0
         switch = False
         new_pattern = []
-        while total <= 8 and (ind < len(parent1) or ind < len(parent2)):
+        while total <= num_beats and (ind_1 < len(parent1) or ind_2 < len(parent2)):
             if switch:
-                if ind < len(parent1) and parent1[ind][0] + total <= 8:
-                    new_pattern.append(parent1[ind])
-                    total += parent1[ind][0]
-                elif ind < len(parent2) and parent2[ind][0] + total <= 8:
-                    new_pattern.append(parent2[ind])
-                    total += parent2[ind][0]
+                if ind_1 < len(parent1) and parent1[ind_1][0] + total <= num_beats:
+                    new_pattern.append(parent1[ind_1])
+                    total += parent1[ind_1][0]
+                    # ind_1 = ind_1 + 1
+                elif ind_2 < len(parent2) and parent2[ind_2][0] + total <= num_beats:
+                    new_pattern.append(parent2[ind_2])
+                    total += parent2[ind_2][0]
+                    # ind_2 = ind_2 + 1
             else:
-                if ind < len(parent2) and parent2[ind][0] + total <= 8:
-                    new_pattern.append(parent2[ind])
-                    total += parent2[ind][0]
-                elif ind < len(parent2) and parent1[ind][0] + total <= 8:
-                    new_pattern.append(parent1[ind])
-                    total += parent1[ind][0]
-            ind += 1
+                if ind_2 < len(parent2) and parent2[ind_2][0] + total <= num_beats:
+                    new_pattern.append(parent2[ind_2])
+                    total = total + parent2[ind_2][0]
+                    # ind_2 = ind_2 + 1
+                elif ind_1 < len(parent1) and parent1[ind_1][0] + total <= num_beats:
+                    new_pattern.append(parent1[ind_1])
+                    total = total + parent1[ind_1][0]
+                    # ind_1 = ind_1 + 1
+            ind_1 = ind_1 + 1
+            ind_2 = ind_2 + 1
+            switch = not switch
+        total = 0
+        for i in range(0, len(new_pattern)):
+            total = total + new_pattern[i][0]
+        if total < num_beats:
+            last_beat = num_beats - total
+            new_pattern.append((last_beat, parent1[0][1]))
         new_gene = gene(new_pattern, self.target_obj, self.pitch_options, self.rhythm_options)
         
         return new_gene
@@ -155,6 +177,26 @@ class world:
                         gene_pattern = orig_gene_pattern
                     gene.reinit(gene_pattern)
 
+    def play_melodies(self):
+        input("press enter to play target")
+        pattern = self.target_obj.pattern
+        for i in range(len(pattern)):
+            tempo = 200
+            duration_mult = 60000 / tempo
+            dur = pattern[i][0] * duration_mult
+            self.client.send_message("/max", [pattern[i][1], dur])
+            print(pattern[i])
+            time.sleep(dur / 1000)
+        for p in range(1):
+            input("press enter to play next match")
+            pattern = self.population[p].get_pattern()
+            for i in range(len(pattern)):
+                tempo = 200
+                duration_mult = 60000 / tempo 
+                dur = pattern[i][0] * duration_mult
+                self.client.send_message("/max", [pattern[i][1], dur])
+                print(pattern[i])
+                time.sleep(dur / 1000)
 
 class target:
     def __init__(self, pattern, pitch_options, rhythm_options):
@@ -241,10 +283,11 @@ class gene:
         #         # get rhythm difference
         #         euclid_sum += ((target[i][1] - pattern[i][1]) ** 2)
 
-target_patt = [(4, 60), (4, 60)]
+target_patt = [(2, 60), (2, 62), (2, 64), (2, 65), (2, 67), (2, 69), (1, 71), (1, 72), (1, 71), (1, 72)]
 
-pitch_options = [-1, 60, 62, 64, 65, 67, 69, 71, 72]
-num_beats = 8
+# pitch_options = [-1, 60, 62, 64, 65, 67, 69, 71, 72]
+pitch_options = [60, 62, 64, 65, 67, 69, 71, 72]
+num_beats = 16
 rhythm_options = [0.25, 0.5, 1, 1.5, 2, 3, 4]
 
 world = world(target_patt, "melodies.txt", pitch_options, rhythm_options)
