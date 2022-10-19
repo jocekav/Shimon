@@ -58,6 +58,6 @@ def gen_rhythm(beats_used, rhy_sel, num_beats):
 
 
 with open('melodies.txt', 'w') as f:
-    for x in range(500):
+    for x in range(1000):
        out = gen_melody(num_beats, rhythm_options, pitch_options)
        f.write(str(out) + '\n')
