@@ -13,7 +13,7 @@ from pythonosc import osc_server
 from typing import List, Any
 import time
 import datetime
-from mido import MidiFile, tick2second, bpm2tempo
+from mido import MidiFile, tick2second, bpm2tempo, second2tick
 
 
 def percentage_pitch(pattern, pitch_options):
@@ -216,7 +216,7 @@ class world:
         self.population_size = len(self.population)
         # IP = "192.168.1.145"
         IP = "143.215.122.192"
-        
+
         PORT_TO_MAX = 7980
         self.client = udp_client.SimpleUDPClient(IP, PORT_TO_MAX)
     
@@ -374,7 +374,7 @@ class world:
         input("press enter to play target")
         pattern = self.target_obj.pattern
         for i in range(len(pattern)):
-            dur_s = tick2second(pattern[i][0], tpb, bpm2tempo(220))
+            dur_s = tick2second(pattern[i][0], tpb, bpm2tempo(bpm))
             self.client.send_message("/max", [pattern[i][1], (dur_s*1000)])
             print(pattern[i])
             time.sleep(dur_s)
@@ -521,11 +521,12 @@ def clean_max_input(address: str, *args: List[Any]):
     ms = args[0]
     pitch = args[1]
 
-    tempo = 300
-    dur_in_ms = 60000 / tempo
-    total_dur = dur_in_ms * num_beats
-    note_length = ms / total_dur
-    target_patt.append((note_length, pitch))
+    tempo = bpm2tempo(220)
+    # dur_in_ms = 60000 / tempo
+    # total_dur = dur_in_ms * num_beats
+    print(ms / 1000)
+    note_length = second2tick((ms/1000), tpb, tempo)
+    target_patt.append((int(note_length), int(pitch)))
     print(target_patt)
     
 
@@ -546,10 +547,11 @@ def listen2Max(ip,port,path, serve_time):
     # # server.server_activate()
     # while()
     # time.sleep(serve_time)
-    server.shutdown_request()
-    server.server_close()
-    server.shutdown()
-    print("server shutdown")
+    disp.unmap(path, clean_max_input)
+    # server.shutdown_request()
+    # server.server_close()
+    # server.shutdown()
+    # print("server shutdown")
 
 
 pitch_options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -559,22 +561,24 @@ tpb = 480
 # 32nd note, triplet 16th, 16th note, triplet 8th, 8th note, triplet quarter, quarter note, dotted quarter, half note, dotted half, whole
 rhythm_options = [tpb/8, int((tpb/4) * .66), tpb/4, int(tpb/2 * .66), tpb/2, int(tpb * .66), tpb, (tpb + tpb/2), tpb * 2, (tpb * 2) + tpb, tpb * 4]
 
-target_patt = [(1224, -1), (204, 70), (263, 73), (217, 75), (4571, 77), (241, -1), (455, 75), (480, 72)]
+# target_patt = [(1224, -1), (204, 70), (263, 73), (217, 75), (4571, 77), (241, -1), (455, 75), (480, 72)]
 
-# tempo = 300
-# dur_in_s = 60 / tempo
-# total_dur = dur_in_s * num_beats
-# print(total_dur)
+target_patt = []
+bpm = 220
+dur_in_s = 60 / bpm
+total_dur = dur_in_s * num_beats
+print(total_dur)
 # IP = "192.168.1.145"
-# R_PORT_TO_MAX = 4980
-# endTime = datetime.datetime.now() + datetime.timedelta(milliseconds=total_dur)
+IP = "143.215.122.192"
+R_PORT_TO_MAX = 4980
+endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur)
 
 # x = threading.Thread(target=listen2Max, args=(IP, R_PORT_TO_MAX, '/max', total_dur))
 # x.start()
 # time.sleep(total_dur)
 # x.join()
 
-# # listen2Max(IP, R_PORT_TO_MAX, '/max', total_dur)
+listen2Max(IP, R_PORT_TO_MAX, '/max', total_dur)
 
 # print(target_patt)
 
