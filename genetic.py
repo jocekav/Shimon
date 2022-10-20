@@ -13,8 +13,6 @@ from pythonosc import osc_server
 from typing import List, Any
 import time
 import datetime
-import keyboard
-import threading
 
 def percentage_pitch(pattern, pitch_options):
     # create dictionary for avail pitches
@@ -566,25 +564,6 @@ target_patt = [(1, 71), (2, 60), (4, 62), (4, 64), (4, 69), (1, 67)]
 pitch_options = [60, 62, 64, 65, 67, 69, 71, 72]
 num_beats = 16
 rhythm_options = [0.25, 0.5, 1, 1.5, 2, 3, 4]
-
-# target_patt = []
-
-# tempo = 300
-# dur_in_s = 60 / tempo
-# total_dur = dur_in_s * num_beats
-# print(total_dur)
-# IP = "192.168.1.145"
-# R_PORT_TO_MAX = 4980
-# endTime = datetime.datetime.now() + datetime.timedelta(milliseconds=total_dur)
-
-# x = threading.Thread(target=listen2Max, args=(IP, R_PORT_TO_MAX, '/max', total_dur))
-# x.start()
-# time.sleep(total_dur)
-# x.join()
-
-# # listen2Max(IP, R_PORT_TO_MAX, '/max', total_dur)
-
-# print(target_patt)
 
 
 world = world(target_patt, "melodies.txt", pitch_options, rhythm_options)

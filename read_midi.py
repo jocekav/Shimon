@@ -33,7 +33,7 @@ def get_data(mid):
                 if msg.velocity != 0:
                     if msg.time > 40:
                         # parsed.append((tick2second(msg.time, tpb, bpm2tempo(220)), 'r'))
-                        parsed.append((msg.time, 'r'))
+                        parsed.append((msg.time, -1))
                         prev_time = 0
                     else:
                         # prev_time = tick2second(msg.time, tpb, bpm2tempo(220))
@@ -48,17 +48,19 @@ def get_data(mid):
         # play_melodies(parsed)
         return parsed
 
-# with open('jazz_licks.txt', 'w') as f:
-#     for (root,dirs,files) in os.walk('/Users/jocekav/Documents/GitHub/Shimon/Ebm7', topdown=True):
-#         # print (root)
-#         # print (dirs)
-#         # print (files)
-#         # print ('--------------------------------')
-#         if not root.endswith('.mscbackup'):
-#             for file in files:
-#                 if file.endswith('.mid'):
-#                     parsed = get_data(root + '/' + file)
-#                     f.write(str(parsed) + '\n')
+with open('jazz_licks.txt', 'w') as f:
+    for (root,dirs,files) in os.walk('/Users/jocekav/Documents/GitHub/Shimon/Ebm7', topdown=True):
+        if not root.endswith('.mscbackup'):
+            for file in files:
+                if file.endswith('.mid'):
+                    parsed = get_data(root + '/' + file)
+                    f.write(str(parsed) + '\n')
+    for (root,dirs,files) in os.walk('/Users/jocekav/Documents/GitHub/Shimon/Dm7', topdown=True):
+        if not root.endswith('.mscbackup'):
+            for file in files:
+                if file.endswith('.mid'):
+                    parsed = get_data(root + '/' + file)
+                    f.write(str(parsed) + '\n')
 
-get_data('/Users/jocekav/Documents/GitHub/Shimon/Ebm7/Lick 87/Lick 87 jazz mapping database Ebm7.mid')
+#get_data('/Users/jocekav/Documents/GitHub/Shimon/Ebm7/Lick 87/Lick 87 jazz mapping database Ebm7.mid')
 

@@ -240,11 +240,9 @@ class world:
         for i in range(5):
             print(self.population[i].get_fitness(), self.population[i].get_pattern())
 
-    def run(self, num_generations=50, survival_rate=.35, mutation_rate=.6):
-        # for i in range(num_generations):
-        # num_generations = 0
-        
-        while (self.population[1].fitness > 30):
+    def run(self, num_generations=30, survival_rate=.35, mutation_rate=.6):
+        for i in range(num_generations):        
+        # while (self.population[1].fitness > 30):
         #     num_generations += 1
             # check evolution rate
             # print("Generation " + str(i))
@@ -558,31 +556,41 @@ pitch_options = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 num_beats = 16
 #tick_per_beat from MIDI files
 tpb = 480
+bpm = 220
 # 32nd note, triplet 16th, 16th note, triplet 8th, 8th note, triplet quarter, quarter note, dotted quarter, half note, dotted half, whole
 rhythm_options = [tpb/8, int((tpb/4) * .66), tpb/4, int(tpb/2 * .66), tpb/2, int(tpb * .66), tpb, (tpb + tpb/2), tpb * 2, (tpb * 2) + tpb, tpb * 4]
 
 # target_patt = [(1224, -1), (204, 70), (263, 73), (217, 75), (4571, 77), (241, -1), (455, 75), (480, 72)]
 
 target_patt = []
-bpm = 220
-dur_in_s = 60 / bpm
-total_dur = dur_in_s * num_beats
-print(total_dur)
-# IP = "192.168.1.145"
 IP = "143.215.122.192"
-R_PORT_TO_MAX = 4980
-endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur)
 
-# x = threading.Thread(target=listen2Max, args=(IP, R_PORT_TO_MAX, '/max', total_dur))
-# x.start()
-# time.sleep(total_dur)
-# x.join()
+def listen_and_play(address: str, *args: List[Any]):
+    if args[0] == 'go':
+        dur_in_s = 60 / bpm
+        total_dur = dur_in_s * num_beats
+        print(total_dur)
+        # IP = "192.168.1.145"
+        R_PORT_TO_MAX_NOTES = 4980
+        endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur)
+        listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
+        world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
+        world_pop.print_population()
+        world_pop.run()
 
-listen2Max(IP, R_PORT_TO_MAX, '/max', total_dur)
 
-# print(target_patt)
-
-
-world = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
-world.print_population()
-world.run()
+# dispatcher to receive message
+disp = dispatcher.Dispatcher()
+disp.map('/max', listen_and_play)
+# server to listen
+server = osc_server.ThreadingOSCUDPServer((IP,6000), disp)
+print("Serving on {}".format(server.server_address))
+server.serve_forever()
+# endTime = datetime.datetime.now() + datetime.timedelta(seconds=serve_time)
+# while(datetime.datetime.now() <= endTime):
+#     server.handle_request()
+# # # server.handle_request()
+# # # server.server_activate()
+# # while()
+# # time.sleep(serve_time)
+# disp.unmap(path, clean_max_input)
