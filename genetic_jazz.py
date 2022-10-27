@@ -211,12 +211,12 @@ class world:
         self.pitch_options = pitch_options
         self.rhythm_options = rhythm_options
         self.target_obj = target(target_pattern, pitch_options, rhythm_options)
+        print(target_pattern)
         self.population = self.build_population(population_file)
         self.population.sort(key = lambda x: x.fitness)
         self.population_size = len(self.population)
         # IP = "192.168.1.145"
-        # IP = "143.215.122.192"
-        IP = '127.0.0.1'
+        IP = "127.0.0.1"
 
         PORT_TO_MAX = 7980
         self.client = udp_client.SimpleUDPClient(IP, PORT_TO_MAX)
@@ -238,11 +238,12 @@ class world:
     def print_population(self):
         # for gene in self.population:
         #     print(gene.get_fitness(), gene.get_pattern())
-        for i in range(5):
+        for i in range(1):
             print(self.population[i].get_fitness(), self.population[i].get_pattern())
 
-    def run(self, num_generations=10, survival_rate=.35, mutation_rate=.6):
-        for i in range(num_generations):        
+    def run(self, num_generations=5, survival_rate=.35, mutation_rate=.6):
+        for i in range(num_generations): 
+        # num_generations = 0       
         # while (self.population[1].fitness > 30):
         #     num_generations += 1
             # check evolution rate
@@ -266,11 +267,13 @@ class world:
             # check evolution rate
             self.population.sort(key = lambda x: x.fitness)
             # self.print_population()
-            if (i > 6):
-                print("Generation " + str(i))
-                self.print_population()
-                self.play_melodies()
-                input("press enter to continue")
+            # if (i > 35):
+                # print("Generation " + str(i))
+        print("Generation " + str(num_generations))
+        self.population.sort(key = lambda x: x.fitness)
+        self.print_population()
+        self.play_melodies()
+            # input("press enter to continue")
         # print(num_generations)
          
     def breed(self):
@@ -370,21 +373,31 @@ class world:
                 gene.reinit(gene_pattern)
 
     def play_melodies(self):
-        input("press enter to play target")
-        pattern = self.target_obj.pattern
-        for i in range(len(pattern)):
-            dur_s = tick2second(pattern[i][0], tpb, bpm2tempo(bpm))
-            self.client.send_message("/max", [pattern[i][1], (dur_s*1000)])
-            print(pattern[i])
-            time.sleep(dur_s)
+        # input("press enter to play target")
+        # pattern = self.target_obj.pattern
+        # for i in range(len(pattern)):
+        #     dur_s = tick2second(pattern[i][0], tpb, bpm2tempo(bpm))
+        #     self.client.send_message("/max", [pattern[i][1], (dur_s*1000)])
+        #     print(pattern[i])
+        #     time.sleep(dur_s)
+        print("playback")
         for p in range(1):
-            input("press enter to play next match")
+            # input("press enter to play next match")
             self.population.sort(key = lambda x: x.fitness)
             pattern = self.population[p].get_pattern()
-            for i in range(len(pattern)):
-                dur_s = tick2second(pattern[i][0], tpb, bpm2tempo(220))
-                self.client.send_message("/max", [pattern[i][1], (dur_s*1000)])
+            i = 0
+            total = 0
+            while total <= (480*4*4):
+                note_dur = pattern[i][0]
+                if note_dur < 150:
+                    note_dur = note_dur * 2
+                total = total + note_dur 
+                # if total >= 480*4*16:
+                #     return
+                dur_s = tick2second(note_dur, tpb, bpm2tempo(220))
+                self.client.send_message("/max", [pattern[i][1], ((dur_s)*1000)])
                 print(pattern[i])
+                i = (i + 1) % len(pattern)
                 time.sleep(dur_s)
 
 class target:
@@ -393,12 +406,12 @@ class target:
         self.pitch_percentage = percentage_pitch(self.pattern, pitch_options)
         self.rhythm_percentage = percentage_rhythm(self.pattern, rhythm_options)
         self.total_ticks = get_total_ticks(pattern)
-        self.pitch_mct = get_pitch_mct(pattern)
-        self.pitch_range = get_range(pattern)
+        # self.pitch_mct = get_pitch_mct(pattern)
+        # self.pitch_range = get_range(pattern)
         self.intervals = get_intervals(pattern)
         self.interval_percentage = percentage_intervals(self.intervals)
-        self.step_to_leap = step_to_leap_ratio(self.intervals)
-        self.abstracted_contour = get_abstracted_contour(pattern)
+        # self.step_to_leap = step_to_leap_ratio(self.intervals)
+        # self.abstracted_contour = get_abstracted_contour(pattern)
         self.expanded_patt = expand_pattern(pattern, rhythm_options)
         self.scaled_expanded_patt = transpose_to_C(self.expanded_patt)
 
@@ -411,12 +424,12 @@ class gene:
         self.total_ticks = get_total_ticks(pattern)
         self.pitch_percentage = percentage_pitch(pattern, pitch_options)
         self.rhythm_percentage = percentage_rhythm(pattern, rhythm_options)
-        self.pitch_mct = get_pitch_mct(pattern)
-        self.pitch_range = get_range(pattern)
+        # self.pitch_mct = get_pitch_mct(pattern)
+        # self.pitch_range = get_range(pattern)
         self.intervals = get_intervals(pattern)
         self.interval_percentage = percentage_intervals(self.intervals)
-        self.step_to_leap = step_to_leap_ratio(self.intervals)
-        self.abstracted_contour = get_abstracted_contour(pattern)
+        # self.step_to_leap = step_to_leap_ratio(self.intervals)
+        # self.abstracted_contour = get_abstracted_contour(pattern)
         self.expanded_patt = expand_pattern(pattern, rhythm_options)
         self.scaled_expanded_patt = transpose_to_C(self.expanded_patt)
         self.fitness = self.get_fitness()
@@ -426,12 +439,12 @@ class gene:
         self.total_ticks = get_total_ticks(pattern)
         self.pitch_percentage = percentage_pitch(self.pattern, self.pitch_options)
         self.rhythm_percentage = percentage_rhythm(self.pattern, self.rhythm_options)
-        self.pitch_mct = get_pitch_mct(self.pattern)
-        self.pitch_range = get_range(self.pattern)
+        # self.pitch_mct = get_pitch_mct(self.pattern)
+        # self.pitch_range = get_range(self.pattern)
         self.intervals = get_intervals(pattern)
         self.interval_percentage = percentage_intervals(self.intervals)
-        self.step_to_leap = step_to_leap_ratio(self.intervals)
-        self.abstracted_contour = get_abstracted_contour(pattern)
+        # self.step_to_leap = step_to_leap_ratio(self.intervals)
+        # self.abstracted_contour = get_abstracted_contour(pattern)
         self.expanded_patt = expand_pattern(pattern, rhythm_options)
         self.scaled_expanded_patt = transpose_to_C(self.expanded_patt)
         self.fitness = self.get_fitness()
@@ -458,9 +471,8 @@ class gene:
 
         euclid_sum = .25 * (target_len - pattern_len) ** 2
 
-
         # difference in number of beats
-        euclid_sum += .25 * (self.target.total_ticks - self.total_ticks) ** 2
+        euclid_sum += (self.target.total_ticks - self.total_ticks) ** 2
 
         # # differences in percentage of each note in the pattern
         # differences = list({k: target.pitch_percentage[k] - self.pitch_percentage[k] for k in target.pitch_percentage}.values())
@@ -516,18 +528,18 @@ class gene:
 
 
 def clean_max_input(address: str, *args: List[Any]):
-    print(address)
-    print(args)
+    # print(address)
+    # print(args)
     ms = args[0]
     pitch = args[1]
 
     tempo = bpm2tempo(220)
     # dur_in_ms = 60000 / tempo
     # total_dur = dur_in_ms * num_beats
-    print(ms / 1000)
+    # print(ms / 1000)
     note_length = second2tick((ms/1000), tpb, tempo)
     target_patt.append((int(note_length), int(pitch)))
-    print(target_patt)
+    # print(target_patt)
     
 
 def listen2Max(ip,port,path, serve_time):
@@ -540,6 +552,7 @@ def listen2Max(ip,port,path, serve_time):
     # server to listen
     server = osc_server.ThreadingOSCUDPServer((ip,port), disp)
     print("Serving on {}".format(server.server_address))
+    print("listening")
     endTime = datetime.datetime.now() + datetime.timedelta(seconds=serve_time)
     while(datetime.datetime.now() <= endTime):
         server.handle_request()
@@ -548,6 +561,7 @@ def listen2Max(ip,port,path, serve_time):
     # while()
     # time.sleep(serve_time)
     disp.unmap(path, clean_max_input)
+    print("stop listening")
     # server.shutdown_request()
     # server.server_close()
     # server.shutdown()
@@ -563,37 +577,34 @@ bpm = 220
 rhythm_options = [tpb/8, int((tpb/4) * .66), tpb/4, int(tpb/2 * .66), tpb/2, int(tpb * .66), tpb, (tpb + tpb/2), tpb * 2, (tpb * 2) + tpb, tpb * 4]
 
 # target_patt = [(1224, -1), (204, 70), (263, 73), (217, 75), (4571, 77), (241, -1), (455, 75), (480, 72)]
-target_patt = [(251, 75), (217, 75), (263, 77), (217, 77), (263, 78), (217, 78), (263, 80), (217, 80), (467, 82), (276, 80), (217, 78)]
 
-# target_patt = []
-# IP = "143.215.122.192"
+global target_patt
+target_patt = []
 IP = "127.0.0.1"
 
-world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
-world_pop.print_population()
-world_pop.run()
-
-# def listen_and_play(address: str, *args: List[Any]):
-#     if args[0] == 'go':
-#         dur_in_s = 60 / bpm
-#         total_dur = dur_in_s * num_beats
-#         print(total_dur)
-#         # IP = "192.168.1.145"
-#         R_PORT_TO_MAX_NOTES = 4980
-#         endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur)
-#         listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
-#         world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
-#         world_pop.print_population()
-#         world_pop.run()
-
+def listen_and_play(address: str, *args: List[Any]):
+    global target_patt
+    if args[0] == 'go':
+        dur_in_s = 60 / bpm
+        total_dur = dur_in_s * (num_beats / 2)
+        print(total_dur)
+        # IP = "192.168.1.145"
+        R_PORT_TO_MAX_NOTES = 1980
+        endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur)
+        listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
+        print(target_patt)
+        world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
+        world_pop.print_population()
+        world_pop.run()
+        target_patt = []
 
 # dispatcher to receive message
-# disp = dispatcher.Dispatcher()
-# disp.map('/max', listen_and_play)
-# # server to listen
-# server = osc_server.ThreadingOSCUDPServer((IP,6000), disp)
-# print("Serving on {}".format(server.server_address))
-# server.serve_forever()
+disp = dispatcher.Dispatcher()
+disp.map('/max', listen_and_play)
+# server to listen
+server = osc_server.ThreadingOSCUDPServer((IP,6000), disp)
+print("Serving on {}".format(server.server_address))
+server.serve_forever()
 # endTime = datetime.datetime.now() + datetime.timedelta(seconds=serve_time)
 # while(datetime.datetime.now() <= endTime):
 #     server.handle_request()
