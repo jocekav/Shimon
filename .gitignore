@@ -1,2 +1,5 @@
-.DS_store
-.pyc
+*.DS_store
+*.pyc
+*shimon_ga/
+
+

@@ -215,7 +215,8 @@ class world:
         self.population.sort(key = lambda x: x.fitness)
         self.population_size = len(self.population)
         # IP = "192.168.1.145"
-        IP = "143.215.122.192"
+        # IP = "143.215.122.192"
+        IP = '127.0.0.1'
 
         PORT_TO_MAX = 7980
         self.client = udp_client.SimpleUDPClient(IP, PORT_TO_MAX)
@@ -240,7 +241,7 @@ class world:
         for i in range(5):
             print(self.population[i].get_fitness(), self.population[i].get_pattern())
 
-    def run(self, num_generations=30, survival_rate=.35, mutation_rate=.6):
+    def run(self, num_generations=10, survival_rate=.35, mutation_rate=.6):
         for i in range(num_generations):        
         # while (self.population[1].fitness > 30):
         #     num_generations += 1
@@ -265,11 +266,11 @@ class world:
             # check evolution rate
             self.population.sort(key = lambda x: x.fitness)
             # self.print_population()
-            # if (i > 35):
-                # print("Generation " + str(i))
-            self.print_population()
-            self.play_melodies()
-            input("press enter to continue")
+            if (i > 6):
+                print("Generation " + str(i))
+                self.print_population()
+                self.play_melodies()
+                input("press enter to continue")
         # print(num_generations)
          
     def breed(self):
@@ -457,8 +458,9 @@ class gene:
 
         euclid_sum = .25 * (target_len - pattern_len) ** 2
 
+
         # difference in number of beats
-        euclid_sum += (self.target.total_ticks - self.total_ticks) ** 2
+        euclid_sum += .25 * (self.target.total_ticks - self.total_ticks) ** 2
 
         # # differences in percentage of each note in the pattern
         # differences = list({k: target.pitch_percentage[k] - self.pitch_percentage[k] for k in target.pitch_percentage}.values())
@@ -561,31 +563,37 @@ bpm = 220
 rhythm_options = [tpb/8, int((tpb/4) * .66), tpb/4, int(tpb/2 * .66), tpb/2, int(tpb * .66), tpb, (tpb + tpb/2), tpb * 2, (tpb * 2) + tpb, tpb * 4]
 
 # target_patt = [(1224, -1), (204, 70), (263, 73), (217, 75), (4571, 77), (241, -1), (455, 75), (480, 72)]
+target_patt = [(251, 75), (217, 75), (263, 77), (217, 77), (263, 78), (217, 78), (263, 80), (217, 80), (467, 82), (276, 80), (217, 78)]
 
-target_patt = []
-IP = "143.215.122.192"
+# target_patt = []
+# IP = "143.215.122.192"
+IP = "127.0.0.1"
 
-def listen_and_play(address: str, *args: List[Any]):
-    if args[0] == 'go':
-        dur_in_s = 60 / bpm
-        total_dur = dur_in_s * num_beats
-        print(total_dur)
-        # IP = "192.168.1.145"
-        R_PORT_TO_MAX_NOTES = 4980
-        endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur)
-        listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
-        world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
-        world_pop.print_population()
-        world_pop.run()
+world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
+world_pop.print_population()
+world_pop.run()
+
+# def listen_and_play(address: str, *args: List[Any]):
+#     if args[0] == 'go':
+#         dur_in_s = 60 / bpm
+#         total_dur = dur_in_s * num_beats
+#         print(total_dur)
+#         # IP = "192.168.1.145"
+#         R_PORT_TO_MAX_NOTES = 4980
+#         endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur)
+#         listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
+#         world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
+#         world_pop.print_population()
+#         world_pop.run()
 
 
 # dispatcher to receive message
-disp = dispatcher.Dispatcher()
-disp.map('/max', listen_and_play)
-# server to listen
-server = osc_server.ThreadingOSCUDPServer((IP,6000), disp)
-print("Serving on {}".format(server.server_address))
-server.serve_forever()
+# disp = dispatcher.Dispatcher()
+# disp.map('/max', listen_and_play)
+# # server to listen
+# server = osc_server.ThreadingOSCUDPServer((IP,6000), disp)
+# print("Serving on {}".format(server.server_address))
+# server.serve_forever()
 # endTime = datetime.datetime.now() + datetime.timedelta(seconds=serve_time)
 # while(datetime.datetime.now() <= endTime):
 #     server.handle_request()
