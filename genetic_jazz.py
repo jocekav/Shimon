@@ -556,7 +556,7 @@ def clean_max_input(address: str, *args: List[Any]):
     # print(ms / 1000)
     note_length = second2tick((ms/1000), tpb, tempo)
     target_patt.append((int(note_length), int(pitch)))
-    print(target_patt)
+    # print(target_patt)
     
 
 def listen2Max(ip,port,path, serve_time):
@@ -616,16 +616,21 @@ def listen_and_play(address: str, *args: List[Any]):
         world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
         world_pop.print_population()
         world_pop.run()
+        target_patt = []
     if args[0] == 'cont':
         listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
         print(target_patt)
         # world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
         # world_pop.print_population()
         # world_pop.run()
-        new_gene = gene(target_patt, world_pop.target_obj, world_pop.pitch_options, world_pop.rhythm_options)
-        if new_gene.get_fitness() < 50:
-            world_pop.play_melodies(world_pop.saved_melody)
-        target_patt = []
+        if target_patt is Empty or len(target_patt) == 1:
+            target_patt = []
+        else:
+            new_gene = gene(target_patt, world_pop.target_obj, world_pop.pitch_options, world_pop.rhythm_options)
+            print(new_gene.get_fitness())
+            if new_gene.get_fitness() < 100:
+                world_pop.play_melodies(world_pop.saved_melody)
+            target_patt = []
 
 
 # dispatcher to receive message
