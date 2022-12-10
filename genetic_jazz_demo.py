@@ -372,7 +372,7 @@ class world:
                             gene_pattern[i] = (gene_pattern[i][0], gene_pattern[i][1] - 2)
                 gene.reinit(gene_pattern)
 
-    def play_melodies(self, pattern=0):
+    def play_melodies(self, pattern=0, total_dur_s=0):
         # input("press enter to play target")
         # pattern = self.target_obj.pattern
         # for i in range(len(pattern)):
@@ -381,7 +381,7 @@ class world:
         #     print(pattern[i])
         #     time.sleep(dur_s)
         print("playback")
-        if pattern == 0:
+        if pattern == 0 and total_dur_s == 0:
             # input("press enter to play next match")
             self.population.sort(key = lambda x: x.fitness)
             pattern = self.population[0].get_pattern()
@@ -389,31 +389,32 @@ class world:
             total = 0
             while total <= (tpb*num_beats):
                 note_dur = pattern[i][0]
-                if note_dur < 150:
-                    note_dur = note_dur * 2
+                # if note_dur < 150:
+                # note_dur = note_dur * 1.5
                 total = total + note_dur 
                 # if total >= 480*4*16:
                 #     return
                 dur_s = tick2second(note_dur, tpb, bpm2tempo(bpm))
+                if dur_s < .13:
+                    dur_s = .15
+                # dur_s = tick2second(note_dur, tpb, bpm2tempo(bpm))
                 self.client.send_message("/max", [pattern[i][1], ((dur_s)*1000)])
                 print(pattern[i])
                 i = (i + 1) % len(pattern)
                 time.sleep(dur_s)
         else:
+            print('playng' + str(pattern))
+            print(total_dur_s)
             i = 0
-            total = 0
-            # while total <= (tpb*num_beats):
-            for i in range(len(pattern)):
+            endTime = datetime.datetime.now() + datetime.timedelta(seconds=total_dur_s)
+            while(datetime.datetime.now() <= endTime):
                 note_dur = pattern[i][0]
-                if note_dur < 150:
-                    note_dur = note_dur * 2
-                total = total + note_dur 
-                # if total >= 480*4*16:
-                #     return
                 dur_s = tick2second(note_dur, tpb, bpm2tempo(bpm))
+                if dur_s < .13:
+                    dur_s = .15
                 self.client.send_message("/max", [pattern[i][1], ((dur_s)*1000)])
-                print(pattern[i])
-                # i = (i + 1) % len(pattern)
+                print(pattern[i][1], dur_s)
+                i = (i + 1) % len(pattern)
                 time.sleep(dur_s)
 
 class target:
@@ -594,21 +595,29 @@ IP = "127.0.0.1"
 R_PORT_TO_MAX_NOTES = 1980
 global response_patt
 response_patt = []
+global final_patt
+final_patt = []
 global world_pop
 world_pop = []
+global playback_time
+playback_time = 0
+
 
 def listen_and_play(address: str, *args: List[Any]):
     global target_patt
     global response_patt
     global world_pop
+    global final_patt
+    global playback_time
     num_beats = args[0]
     ## improv based on head
     if num_beats == 50:
-        num_beats = 24
+        num_beats = 6 * 4
         dur_in_s = 60 / bpm
         total_dur = dur_in_s * num_beats
+        print('total_dur is ' + str(total_dur))
         # print(total_dur)
-        for i in range(6):
+        for i in range(8):
             listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
             print(target_patt)
             world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
@@ -617,11 +626,36 @@ def listen_and_play(address: str, *args: List[Any]):
             response_patt.extend(resp)
             target_patt = []
             print(response_patt)
-        num_beats = 6 * 24
+        num_beats = 8 * num_beats
+        playback_time = total_dur * 8
+        print(playback_time)
     elif num_beats == 1:
-        world_pop.play_melodies(response_patt)
+        world_pop.play_melodies(response_patt, playback_time)
         response_patt = []
-    elif num_beats == '127':
+    elif num_beats == 'go':
+        num_beats = 6 * 4
+        dur_in_s = 60 / bpm
+        total_dur = dur_in_s * num_beats
+        final_patt = []
+        # print(total_dur)
+        for i in range(8):
+            listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
+            print(target_patt)
+            world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
+            world_pop.print_population()
+            resp = world_pop.run()
+            final_patt.extend(resp)
+            print(final_patt)
+        num_beats = 8 * num_beats
+        playback_time = total_dur * 8
+    elif num_beats == 2:
+        num_beats = 8 * 24
+        dur_in_s = 60 / bpm
+        total_dur = dur_in_s * num_beats
+        print(final_patt)
+        world_pop.play_melodies(final_patt, playback_time)
+        final_patt = []
+    elif num_beats == 127:
         # target is A section
         num_beats = 16
         dur_in_s = 60 / bpm
@@ -639,14 +673,16 @@ def listen_and_play(address: str, *args: List[Any]):
                 world_pop.play_melodies()
     else:
         dur_in_s = 60 / bpm
-        total_dur = dur_in_s * num_beats
-        # print(total_dur)
+        total_dur = dur_in_s * ((num_beats - 2) * 4) 
+        print(total_dur)
         listen2Max(IP, R_PORT_TO_MAX_NOTES, '/max', total_dur)
+        total_dur = dur_in_s * ((num_beats) * 4) 
+        playback_time = total_dur
         print(target_patt)
         world_pop = world(target_patt, "jazz_licks.txt", pitch_options, rhythm_options)
         world_pop.print_population()
         response_patt = world_pop.run()
-        world_pop.play_melodies(response_patt)
+        # world_pop.play_melodies()
         target_patt = []
         
 
@@ -657,11 +693,3 @@ disp.map('/listen', listen_and_play)
 server = osc_server.ThreadingOSCUDPServer((IP,6000), disp)
 print("Serving on {}".format(server.server_address))
 server.serve_forever()
-# endTime = datetime.datetime.now() + datetime.timedelta(seconds=serve_time)
-# while(datetime.datetime.now() <= endTime):
-#     server.handle_request()
-# # # server.handle_request()
-# # # server.server_activate()
-# # while()
-# # time.sleep(serve_time)
-# disp.unmap(path, clean_max_input)
